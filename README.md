@@ -101,7 +101,7 @@ target-specific setup → version wiring → branch gate.
 ## Install the marketplace
 
 ```
-/plugin marketplace add uplift-technology-company-limited/vercel-gha-deploy
+/plugin marketplace add uplift-technology-company-limited/uplift-plugins
 /plugin install <plugin-name>@uplift-plugins
 ```
 
