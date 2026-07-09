@@ -1,0 +1,85 @@
+name: Deploy <SERVICE_NAME> (production · ECS)
+
+# Typecheck gate → scripts/deploy.sh (build → ECR push → register task-def →
+# update-service → wait-stable → version tag) → smoke test. See
+# references/aws-ecs.md for the deploy.sh internals and where
+# upliftcontrolversion's APP_VERSION/OTEL_SERVICE_VERSION plug in.
+#
+# Branch gate: feature → dev → main → deploy from main only.
+
+on:
+  # TODO(first-run): arm auto-deploy after a manual workflow_dispatch run below
+  # is verified green (ECS rollout COMPLETED + tag pushed):
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump for this deploy (git tag vX.Y.Z)"
+        type: choice
+        default: patch
+        options: [patch, minor, major]
+
+concurrency:
+  group: deploy-<SERVICE_NAME>-prod
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: <region>
+  ECS_CLUSTER: <cluster>
+  ECS_SERVICE: <service>
+
+jobs:
+  deploy:
+    name: Typecheck gate → build → ECR → ECS
+    # Self-hosted: native arm64 build, but shares the org's one runner.
+    # runs-on: [self-hosted, linux, arm64, uplift-deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: write # deploy.sh pushes the vX.Y.Z release tag
+      id-token: write # if using OIDC to assume an AWS role instead of static keys
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history + tags for the version bump
+
+      - name: Guard — must be on main
+        env:
+          GH_REF: ${{ github.ref }}
+        run: |
+          if [ "$GH_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy must run from main (got $GH_REF)."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: <arn:aws:iam::ACCOUNT:role/ROLE> # or use access-key-id/secret-access-key secrets
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile # or npm ci / pnpm i --frozen-lockfile
+
+      - name: Type check
+        run: bun run typecheck
+
+      - name: Deploy (scripts/deploy.sh)
+        env:
+          BUMP: ${{ github.event.inputs.bump }}
+        run: ./scripts/deploy.sh deploy
+
+      - name: Smoke test
+        run: |
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" https://<PROD_DOMAIN>/health || echo 000)
+            echo "attempt $i → HTTP $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::<SERVICE_NAME> did not return 200 after rollout"
+          exit 1

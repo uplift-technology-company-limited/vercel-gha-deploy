@@ -68,6 +68,36 @@ tag-bump mechanics and the shape-specific wiring.
 /plugin install upliftcontrolversion@uplift-plugins
 ```
 
+### `upliftgha`
+
+Sets up, migrates, or audits **GitHub Actions CI/CD** for a repo — the router
+that ties the other two plugins together, plus the ground they don't cover:
+
+- **Jenkins → GHA conversion.** Reads a `Jenkinsfile` stage-by-stage and maps it
+  to a GHA workflow (`agent`/`environment`/`withCredentials`/`parallel`/`post`/
+  `when` → their GHA equivalents), flagging anything with no clean mapping
+  (shared libraries, heavy Groovy) instead of guessing.
+- **Greenfield interview.** No pipeline at all yet? It asks: what should it do,
+  frontend or backend, Vercel or AWS, EC2 or ECS, does the ECR registry already
+  exist.
+- **Routes, doesn't reimplement.** Vercel target → hands off to
+  `vercel-gha-deploy` entirely. Every target → always wires in
+  `upliftcontrolversion`'s version-tag contract.
+- **Owns AWS EC2 (docker-compose via SSM) and ECS (Fargate + ECR)** directly,
+  with copy-paste templates for both.
+- **Terraform-only for infra** — if a target needs AWS infrastructure that
+  doesn't exist yet (like a fresh ECR repo), it says so and points at
+  Terraform rather than provisioning anything itself.
+
+Ask Claude to "set up GitHub Actions for this repo", "convert this Jenkinsfile
+to GHA", "migrate off Jenkins", or "this repo has no CI yet" and it runs the
+decision tree: detect state → runner choice (self-hosted vs GitHub-hosted) →
+target-specific setup → version wiring → branch gate.
+
+```
+/plugin install upliftgha@uplift-plugins
+```
+
 ## Install the marketplace
 
 ```

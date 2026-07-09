@@ -15,6 +15,11 @@
       "name": "upliftcontrolversion",
       "source": "./plugins/upliftcontrolversion",
       "description": "Wire a repo so every deploy auto-bumps a git tag (vX.Y.Z), bakes it into the artifact, shows it to humans, and stops OTEL_SERVICE_VERSION from drifting off a hardcoded value. Uplift's own versioning playbook."
+    },
+    {
+      "name": "upliftgha",
+      "source": "./plugins/upliftgha",
+      "description": "Set up, migrate, or audit GitHub Actions CI/CD for a repo — including converting a Jenkins pipeline to GHA. Routes to vercel-gha-deploy for Vercel frontends and always wires in upliftcontrolversion; owns the AWS EC2 and ECS deploy shapes directly."
     }
   ]
 }
