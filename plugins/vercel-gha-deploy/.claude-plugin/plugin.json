@@ -2,14 +2,24 @@
   "name": "vercel-gha-deploy",
   "displayName": "Vercel GitHub Actions Deploy",
   "description": "Set up (or fix) deploying a Next.js / frontend repo to Vercel from a GitHub Actions workflow, with a main-only branch gate and auto-bumped vX.Y.Z version tags baked into the build. Bootstraps a fresh repo (git init → GitHub → vercel link) if needed.",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "author": {
     "name": "Uplift Tech"
   },
   "homepage": "https://github.com/uplift-technology-company-limited/vercel-gha-deploy",
   "repository": "https://github.com/uplift-technology-company-limited/vercel-gha-deploy",
   "license": "MIT",
-  "keywords": ["vercel", "github-actions", "deploy", "nextjs", "ci-cd", "versioning", "semver"],
+  "keywords": [
+    "vercel",
+    "github-actions",
+    "deploy",
+    "nextjs",
+    "ci-cd",
+    "versioning",
+    "semver"
+  ],
   "category": "deployment",
-  "skills": ["./skills/"]
+  "skills": [
+    "./skills/"
+  ]
 }
